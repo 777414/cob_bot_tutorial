@@ -1,48 +1,86 @@
-import logging
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-import random
+import csv
+import pandas as pd
+import yaml
 
-TOKEN = '6297686341:AAEdPRUcB7UgYg8PBEVxSpIe6i0KYAQ_Zik'
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO 
-)
+    # id;user_name;rating;is_banned;is_mailing
+# ls = list(map(lambda x: (x[1], x[3]), list(file_reader)[1:]))
+# print(sorted(ls, key=lambda x: x[1]))
+def add_user(list, val, chat_id):
+    if val:
+        with open('users.csv', 'a', newline='', encoding='utf-8') as csvfile:
+            file_writer = csv.writer(csvfile, delimiter = ";", lineterminator="\n")
+            file_writer.writerow(list)
+        with open("secrets.yaml", "r") as stream:
+            try:
+                secrets = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+            secrets['secrets']['chat_ids'].append(chat_id)
+        with open("secrets.yaml", "w") as stream:
+            yaml.dump(secrets, stream, default_flow_style=False)
+        return True
+    else:
+        return False
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text='https://github.com/777414/cob_bot_tutorial')
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text='Не понимаб')
+def check_user(secrets:dict, id:str):
+    return id in secrets['secrets']['chat_ids']
 
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    mes_text = query.message.text
-    await query.edit_message_text(text=mes_text)
-    result_text = 'Правильно!' if query.data == '1' else 'Неправильно!'
-    await context.bot.send_message(chat_id=query.message.chat_id, text=result_text, reply_to_message_id=query.message.id)
 
-async def callback_minute(context: ContextTypes.DEFAULT_TYPE):
-    text = 'Сколько колес у машин?'
-    keyboard = [[]]
-    answers = ['5', '6', '7']
-    right_ans = '4'
-    for wrong_ans in answers:
-        keyboard[0].append(InlineKeyboardButton(wrong_ans, callback_data='0'))
-    keyboard[0].append(InlineKeyboardButton(right_ans, callback_data='1'))
-    random.shuffle(keyboard[0])
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    users = ['1821954622']
-    for user in users:
-        await context.bot.send_message(chat_id=user, text=text, reply_markup=reply_markup)
+def check_chat_id(chat_id):
+    with open("secrets.yaml", "r") as stream:
+        try:
+            secrets = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    if chat_id in secrets['secrets']['chat_ids']:
+        return False
+    else:
+        return True
 
-if __name__ == '__main__':
-    application = Application.builder().token(TOKEN).build()
-    job = application.job_queue
-    job_minute = job.run_repeating(callback_minute, interval=30)
-    application.add_handler(CommandHandler('start', start))
-    application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(MessageHandler(filters.TEXT or (~filters.COMMAND), echo))
-    application.run_polling()
+def check_name_user(name):
+    if name:
+        return name
+    else:
+        return "None"
+
+
+def read_secrets():
+        with open("secrets.yaml", "r") as stream:
+            try:
+                secrets = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+        return secrets
+
+def get_user_by_chatid(secrets:dict, chat_id:str):
+    return secrets['secrets']['chat_ids'].index(chat_id)
+
+def check_user_is_malling(users: pd.DataFrame, secrets:dict, chat_id:str):
+    user_id = get_user_by_chatid(secrets, chat_id)
+    return users[user_id]['is_mailing'] == 'True'
+            
+def read_users():
+       df = pd.read_csv('users.csv', sep=';')
+       return df
+
+def save_users(users:pd.DataFrame):
+    users.to_csv('users.csv', sep=';', index=False)
+
+def save_secrets(secrets:dict):
+    with open("secrets.yaml", "w") as stream:
+        yaml.dump(secrets, stream, default_flow_style=False)
+
+def check_is_malling(name_user):
+        with open('users.csv', 'r', newline='', encoding='utf-8') as csvfile:
+            file_reader = csv.reader(csvfile, delimiter=';', quotechar='|')
+            ls = list(filter(lambda x: x[1] == name_user, file_reader))
+        if ls[0][-1] == "False":
+            return False
+        else:
+            return True
+s = read_secrets()
+s['secrets']['chat_ids'].append(111111)
+print(s)
+save_secrets(s)

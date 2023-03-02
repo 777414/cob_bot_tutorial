@@ -1,6 +1,2 @@
-id;user_name;chat_id;rating;is_banned;is_mailing
-0;Никита;0;2;False;False
-1;Данияр;0;1;False;False
-2,Иван;0;10;False;False
-3;Егор;0;50;False;False
-4;Бог;0;9999999;False;False
+id;user_name;rating;is_banned;is_mailing
+0;Vla Dik;8;False;True
