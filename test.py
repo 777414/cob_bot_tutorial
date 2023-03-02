@@ -2,10 +2,6 @@ import csv
 import pandas as pd
 import yaml
 
-
-    # id;user_name;rating;is_banned;is_mailing
-# ls = list(map(lambda x: (x[1], x[3]), list(file_reader)[1:]))
-# print(sorted(ls, key=lambda x: x[1]))
 def add_user(list, val, chat_id):
     if val:
         with open('users.csv', 'a', newline='', encoding='utf-8') as csvfile:
@@ -80,7 +76,3 @@ def check_is_malling(name_user):
             return False
         else:
             return True
-s = read_secrets()
-s['secrets']['chat_ids'].append(111111)
-print(s)
-save_secrets(s)
